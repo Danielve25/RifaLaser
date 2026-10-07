@@ -19,6 +19,7 @@ type Producto struct {
 	Descripcion  string `json:"descripcion"`
 	StockInicial int    `json:"stock_inicial"`
 	EsRaro       bool   `json:"es_raro"`
+	ImagenURL    string `json:"imagen_url"`
 }
 
 type Nuevo struct {
@@ -26,6 +27,7 @@ type Nuevo struct {
 	Descripcion  string `json:"descripcion"`
 	StockInicial int    `json:"stock_inicial"`
 	EsRaro       bool   `json:"es_raro"`
+	ImagenURL    string `json:"imagen_url"`
 }
 
 func escribir(w http.ResponseWriter, codigo int, v any) {
@@ -46,10 +48,10 @@ func (m *Manejador) Crear(w http.ResponseWriter, r *http.Request) {
 	}
 	var p Producto
 	err := m.DB.QueryRow(r.Context(),
-		`INSERT INTO products(nombre, descripcion, stock_inicial, es_raro)
-		 VALUES($1,$2,$3,$4) RETURNING id, nombre, descripcion, stock_inicial, es_raro`,
-		in.Nombre, in.Descripcion, in.StockInicial, in.EsRaro,
-	).Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.StockInicial, &p.EsRaro)
+		`INSERT INTO products(nombre, descripcion, stock_inicial, es_raro, imagen_url)
+		 VALUES($1,$2,$3,$4,$5) RETURNING id, nombre, descripcion, stock_inicial, es_raro, imagen_url`,
+		in.Nombre, in.Descripcion, in.StockInicial, in.EsRaro, in.ImagenURL,
+	).Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.StockInicial, &p.EsRaro, &p.ImagenURL)
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
@@ -65,7 +67,7 @@ func (m *Manejador) Crear(w http.ResponseWriter, r *http.Request) {
 
 func (m *Manejador) Listar(w http.ResponseWriter, r *http.Request) {
 	rows, err := m.DB.Query(r.Context(),
-		`SELECT id, nombre, descripcion, stock_inicial, es_raro FROM products ORDER BY id`)
+		`SELECT id, nombre, descripcion, stock_inicial, es_raro, imagen_url FROM products ORDER BY id`)
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
@@ -74,7 +76,7 @@ func (m *Manejador) Listar(w http.ResponseWriter, r *http.Request) {
 	out := []Producto{}
 	for rows.Next() {
 		var p Producto
-		_ = rows.Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.StockInicial, &p.EsRaro)
+		_ = rows.Scan(&p.ID, &p.Nombre, &p.Descripcion, &p.StockInicial, &p.EsRaro, &p.ImagenURL)
 		out = append(out, p)
 	}
 	escribir(w, 200, map[string]any{"productos": out})
