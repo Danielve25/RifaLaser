@@ -13,6 +13,7 @@ import (
 	"rifa-laser/backend/internal/orders"
 	"rifa-laser/backend/internal/products"
 	"rifa-laser/backend/internal/rounds"
+	"rifa-laser/backend/internal/ws"
 )
 
 func Rutas(db *pgxpool.Pool) *chi.Mux {
@@ -66,5 +67,11 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Patch("/orders/{id}", oh.CambiarEstado)
 	})
 
+	return r
+}
+
+func RutasWS() *chi.Mux {
+	r := chi.NewRouter()
+	r.Get("/rounds/{id}", ws.Hub.Entrar)
 	return r
 }
