@@ -71,7 +71,7 @@ UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
    es la suma del stock (100 hoy, 200 mañana, lo que haya).
 2. `POST /api/admin/rounds` `{}` crea la ronda con ese total.
 3. `POST /api/admin/rounds/:id/generate-tickets` reparte una boleta por
-   unidad de stock, con el nombre del producto como tema.
+   unidad de stock. La carta va volteada: el tema es al azar y no dice el premio.
 4. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
 
 ## 6. Juego (como cliente)
