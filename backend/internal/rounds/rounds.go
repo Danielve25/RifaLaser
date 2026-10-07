@@ -67,7 +67,7 @@ func (m *Manejador) Activa(w http.ResponseWriter, r *http.Request) {
 		`SELECT id, total_tickets, estado FROM rounds WHERE estado='activa' ORDER BY id DESC LIMIT 1`,
 	).Scan(&x.ID, &x.TotalTickets, &x.Estado)
 	if err != nil {
-		escribir(w, 404, map[string]string{"error": "no hay ronda activa"})
+		escribir(w, 200, map[string]any{"ronda": nil})
 		return
 	}
 	escribir(w, 200, map[string]any{"ronda": x})

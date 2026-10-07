@@ -37,6 +37,11 @@ export default function Galeria() {
     <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
         <h1 className="text-2xl font-black">Galería · primero que llega, primero que escoge</h1>
+        {!id && !ronda.isLoading && (
+          <p className="rounded-xl border border-amber-500/20 bg-[#241610] p-4 text-stone-400">
+            La ronda se cerró. Vuelve cuando el taller abra la siguiente.
+          </p>
+        )}
         {ganado && (
           <div className="rounded-xl border-2 border-amber-400 bg-[#2B1B12] p-4">
             Ganaste: {ganado.producto} ({ganado.tema}). En 5 días se le entrega su premio, llega el {ganado.entrega_estimada}.

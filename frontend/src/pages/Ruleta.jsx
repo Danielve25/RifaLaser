@@ -43,6 +43,11 @@ export default function Ruleta() {
     <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
       <div className="max-w-lg mx-auto space-y-4 text-center">
         <h1 className="text-2xl font-black">Ruleta</h1>
+        {!id && !ronda.isLoading && (
+          <p className="rounded-xl border border-amber-500/20 bg-[#241610] p-4 text-stone-400">
+            La ronda se cerró. Vuelve cuando el taller abra la siguiente.
+          </p>
+        )}
         <Roulette tickets={tickets} ganador={ganado} girando={girando} onFin={fin} />
         {!girando && (
           <button onClick={girar} className="rounded bg-amber-500 text-[#17100B] font-bold px-8 py-3">
