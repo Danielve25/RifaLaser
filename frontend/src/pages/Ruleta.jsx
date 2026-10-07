@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import confetti from 'canvas-confetti'
 import Roulette from '../components/Roulette'
+import { AvisoGanador } from '../components/AvisoGanador'
+import { Titulo } from '../components/Titulo'
 import { api } from '../api/client'
-import { usarBoletas, usarSocket } from '../hooks/useRonda'
+import { usarBoletas, usarSocket } from '../hooks/useJuego'
 
 export default function Ruleta() {
   const boletas = usarBoletas()
@@ -44,25 +46,25 @@ export default function Ruleta() {
   const tickets = (boletas.data?.tickets ?? []).filter((t) => t.estado === 'disponible')
 
   return (
-    <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
+    <main className="pantalla">
       <div className="max-w-lg mx-auto space-y-4 text-center">
-        <h1 className="text-2xl font-black">Ruleta</h1>
+        <div className="text-left">
+          <Titulo subtitulo="El sorteo ya salió: la ruleta solo lo muestra.">Ruleta</Titulo>
+        </div>
         {!boletas.isLoading && tickets.length === 0 && !girando && (
-          <p className="rounded-xl border border-amber-500/20 bg-[#241610] p-4 text-stone-400">
+          <p className="nota text-left" role="status">
             Se acabó el stock. Vuelve cuando el taller produzca más.
           </p>
         )}
         <Roulette tickets={tickets} indice={indice} girando={girando} onFin={fin} />
         {!girando && tickets.length > 0 && (
-          <button onClick={girar} className="rounded bg-amber-500 text-[#17100B] font-bold px-8 py-3">
+          <button onClick={girar} className="btn-ambar max-w-xs mx-auto">
             Girar
           </button>
         )}
-        {ganado && !girando && (
-          <div className="rounded-xl border-2 border-amber-400 bg-[#2B1B12] p-4">
-            Ganaste: {ganado.producto} ({ganado.tema}). En 5 días se le entrega su premio, llega el {ganado.entrega_estimada}.
-          </div>
-        )}
+        <div className="text-left">
+          <AvisoGanador order={ganado && !girando ? ganado : null} />
+        </div>
       </div>
     </main>
   )

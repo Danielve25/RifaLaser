@@ -1,23 +1,43 @@
+const estados = {
+  ganado: 'bg-yellow-400/15 text-ambar-brillo border-yellow-400/30',
+  preparacion: 'bg-sky-400/15 text-sky-300 border-sky-400/30',
+  en_camino: 'bg-violet-400/15 text-violet-300 border-violet-400/30',
+  entregado: 'bg-green-400/15 text-green-300 border-green-400/30',
+}
+
+function fechaCorta(iso) {
+  if (!iso) return ''
+  const d = new Date(iso + 'T00:00:00')
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 export default function OrderCard({ order }) {
   return (
-    <div
+    <article
       className={
         order.es_raro
-          ? 'rounded-xl p-4 bg-[#2B1B12] border-2 border-amber-400 shadow-[0_0_24px_rgba(245,165,36,0.35)]'
-          : 'rounded-xl p-4 bg-[#241610] border border-amber-500/20'
+          ? 'rounded-2xl p-4 bg-madera-700 border-2 border-ambar shadow-brasa'
+          : 'rounded-2xl p-4 bg-madera-800 border border-ambar/20 shadow-carta'
       }
     >
-      <div className="flex items-baseline justify-between">
-        <h3 className="text-lg font-bold text-amber-100">{order.producto}</h3>
-        {order.es_raro && <span className="text-xs font-bold text-amber-400">RARO</span>}
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="font-display text-lg text-crema">{order.producto}</h3>
+        {order.es_raro && (
+          <span className="text-[11px] font-bold tracking-widest text-madera-950 bg-ambar rounded px-2 py-0.5">RARO</span>
+        )}
       </div>
-      <p className="text-sm text-stone-400">
+      <p className="text-sm text-piedra">
         Boleta {order.codigo_visual} · {order.tema}
       </p>
-      <p className="mt-2 text-sm text-amber-100/90">
-        En 5 días se le entrega su premio · llega el {order.entrega_estimada}
+      <p className="mt-2 text-sm text-crema/90">
+        En 5 días se le entrega su premio · llega el {fechaCorta(order.entrega_estimada)}
       </p>
-      <p className="text-xs text-stone-500">Estado: {order.estado}</p>
-    </div>
+      <p className="mt-2">
+        <span className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${estados[order.estado] || estados.ganado}`}>
+          {order.estado}
+        </span>
+      </p>
+    </article>
   )
 }
