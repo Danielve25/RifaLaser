@@ -47,6 +47,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Get("/active", rh.Activa)
 		x.Get("/{id}/tickets", rh.Boletas)
 		x.Post("/{id}/pick", oh.Escoger)
+		x.Post("/{id}/draw", oh.Girar)
 	})
 
 	r.Route("/my", func(x chi.Router) {
