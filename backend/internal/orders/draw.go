@@ -3,10 +3,7 @@ package orders
 import (
 	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
-
-	"github.com/go-chi/chi/v5"
 
 	"rifa-laser/backend/internal/auth"
 	"rifa-laser/backend/internal/ws"
@@ -44,7 +41,6 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 401, map[string]string{"error": "sin sesion"})
 		return
 	}
-	roundID, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	tx, err := m.DB.Begin(r.Context())
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
@@ -65,7 +61,7 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	rows, err := tx.Query(r.Context(),
 		`SELECT t.id, t.producto_id, p.stock_inicial FROM tickets t
 		 JOIN products p ON p.id=t.producto_id
-		 WHERE t.round_id=$1 AND t.estado='disponible'`, roundID)
+		 WHERE t.estado='disponible'`)
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
@@ -82,7 +78,7 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	}
 	rows.Close()
 	if len(lista) == 0 {
-		escribir(w, 409, map[string]string{"error": "la ronda se cerro"})
+		escribir(w, 409, map[string]string{"error": "se acabo el stock"})
 		return
 	}
 	// peso inicial: lo comun sostiene, lo raro celebra
@@ -138,15 +134,12 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	}
 	var libres int
 	_ = tx.QueryRow(r.Context(),
-		`SELECT count(*) FROM tickets WHERE round_id=$1 AND estado='disponible'`, roundID).Scan(&libres)
-	if libres == 0 {
-		_, _ = tx.Exec(r.Context(), `UPDATE rounds SET estado='cerrada' WHERE id=$1`, roundID)
-	}
+		`SELECT count(*) FROM tickets WHERE estado='disponible'`).Scan(&libres)
 	if err := tx.Commit(r.Context()); err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
 	}
-	ws.AnunciaOcupada(roundID, ticketID, orderID, libres == 0)
+	ws.AnunciaOcupada(ticketID, orderID, libres == 0)
 	escribir(w, 200, map[string]any{"order": Pedido{
 		ID: orderID, TicketID: ticketID, CodigoVisual: visual, Tema: tema,
 		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,

@@ -4,27 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"sync"
 
 	"github.com/coder/websocket"
-	"github.com/go-chi/chi/v5"
 
 	"rifa-laser/backend/internal/auth"
 )
 
 type Centro struct {
 	mu    sync.Mutex
-	salas map[int]map[*websocket.Conn]bool
+	vivos map[*websocket.Conn]bool
 }
 
-var Hub = &Centro{salas: map[int]map[*websocket.Conn]bool{}}
+var Hub = &Centro{vivos: map[*websocket.Conn]bool{}}
 
-func (c *Centro) mandarTexto(ronda int, texto string) {
+func (c *Centro) mandarTexto(texto string) {
 	c.mu.Lock()
-	sala := c.salas[ronda]
-	vivos := make([]*websocket.Conn, 0, len(sala))
-	for conn := range sala {
+	vivos := make([]*websocket.Conn, 0, len(c.vivos))
+	for conn := range c.vivos {
 		vivos = append(vivos, conn)
 	}
 	c.mu.Unlock()
@@ -42,8 +39,8 @@ func textoOcupada(ticket int) string {
 	return string(b)
 }
 
-func textoCerrada() string {
-	b, _ := json.Marshal(map[string]string{"tipo": "ronda_cerrada"})
+func textoAgotado() string {
+	b, _ := json.Marshal(map[string]string{"tipo": "stock_agotado"})
 	return string(b)
 }
 
@@ -52,11 +49,11 @@ func textoPedido(order int) string {
 	return string(b)
 }
 
-func AnunciaOcupada(ronda, ticket, order int, cerrada bool) {
-	Hub.mandarTexto(ronda, textoOcupada(ticket))
-	Hub.mandarTexto(ronda, textoPedido(order))
-	if cerrada {
-		Hub.mandarTexto(ronda, textoCerrada())
+func AnunciaOcupada(ticket, order int, agotado bool) {
+	Hub.mandarTexto(textoOcupada(ticket))
+	Hub.mandarTexto(textoPedido(order))
+	if agotado {
+		Hub.mandarTexto(textoAgotado())
 	}
 }
 
@@ -66,20 +63,16 @@ func (c *Centro) Entrar(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error":"sesion mala"}`, http.StatusUnauthorized)
 		return
 	}
-	ronda, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 	if err != nil {
 		return
 	}
 	c.mu.Lock()
-	if c.salas[ronda] == nil {
-		c.salas[ronda] = map[*websocket.Conn]bool{}
-	}
-	c.salas[ronda][conn] = true
+	c.vivos[conn] = true
 	c.mu.Unlock()
 	defer func() {
 		c.mu.Lock()
-		delete(c.salas[ronda], conn)
+		delete(c.vivos, conn)
 		c.mu.Unlock()
 		_ = conn.Close(websocket.StatusNormalClosure, "")
 	}()

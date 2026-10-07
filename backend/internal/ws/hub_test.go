@@ -15,7 +15,7 @@ import (
 
 func servidorPrueba() *httptest.Server {
 	r := chi.NewRouter()
-	r.Get("/rounds/{id}", Hub.Entrar)
+	r.Get("/", Hub.Entrar)
 	return httptest.NewServer(r)
 }
 
@@ -27,7 +27,7 @@ func TestAvisoLlega(t *testing.T) {
 	}
 	srv := servidorPrueba()
 	defer srv.Close()
-	url := "ws" + srv.URL[4:] + "/rounds/9?token=" + token
+	url := "ws" + srv.URL[4:] + "/?token=" + token
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	c1, _, err := websocket.Dial(ctx, url, nil)
@@ -41,7 +41,7 @@ func TestAvisoLlega(t *testing.T) {
 	}
 	defer c2.Close(websocket.StatusNormalClosure, "")
 	time.Sleep(200 * time.Millisecond)
-	AnunciaOcupada(9, 12, 34, false)
+	AnunciaOcupada(12, 34, false)
 	leer := func(c *websocket.Conn) map[string]any {
 		_, b, err := c.Read(ctx)
 		if err != nil {
@@ -66,7 +66,7 @@ func TestAvisoLlega(t *testing.T) {
 func TestSinTokenNoEntra(t *testing.T) {
 	srv := servidorPrueba()
 	defer srv.Close()
-	url := "ws" + srv.URL[4:] + "/rounds/1"
+	url := "ws" + srv.URL[4:] + "/"
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, resp, err := websocket.Dial(ctx, url, nil)

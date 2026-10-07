@@ -9,10 +9,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"rifa-laser/backend/internal/auth"
+	"rifa-laser/backend/internal/boletas"
 	"rifa-laser/backend/internal/codes"
 	"rifa-laser/backend/internal/orders"
 	"rifa-laser/backend/internal/products"
-	"rifa-laser/backend/internal/rounds"
 	"rifa-laser/backend/internal/ws"
 )
 
@@ -20,7 +20,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 	r := chi.NewRouter()
 	ah := &auth.Manejador{DB: db}
 	ph := &products.Manejador{DB: db}
-	rh := &rounds.Manejador{DB: db}
+	bh := &boletas.Manejador{DB: db}
 	ch := &codes.Manejador{DB: db}
 	oh := &orders.Manejador{DB: db}
 
@@ -43,12 +43,12 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Get("/saldo", ch.Saldo)
 	})
 
-	r.Route("/rounds", func(x chi.Router) {
+	r.Route("/tickets", func(x chi.Router) {
 		x.Use(auth.PedirLogin)
-		x.Get("/active", rh.Activa)
-		x.Get("/{id}/tickets", rh.Boletas)
-		x.Post("/{id}/pick", oh.Escoger)
-		x.Post("/{id}/draw", oh.Girar)
+		x.Get("/", bh.Lista)
+		x.Get("/estado", bh.Estado)
+		x.Post("/pick", oh.Escoger)
+		x.Post("/draw", oh.Girar)
 	})
 
 	r.Route("/my", func(x chi.Router) {
@@ -60,8 +60,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Use(auth.PedirAdmin)
 		x.Post("/products", ph.Crear)
 		x.Get("/products", ph.Listar)
-		x.Post("/rounds", rh.Crear)
-		x.Post("/rounds/{id}/generate-tickets", rh.Generar)
+		x.Post("/stock/sincronizar", bh.Sincronizar)
 		x.Post("/codes/batch", ch.Lote)
 		x.Get("/codes", ch.Lista)
 		x.Get("/orders", oh.ListaAdmin)
@@ -73,6 +72,6 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 
 func RutasWS() *chi.Mux {
 	r := chi.NewRouter()
-	r.Get("/rounds/{id}", ws.Hub.Entrar)
+	r.Get("/", ws.Hub.Entrar)
 	return r
 }
