@@ -36,8 +36,8 @@ func (m *Manejador) Lote(w http.ResponseWriter, r *http.Request) {
 		Cantidad int `json:"cantidad"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&in)
-	if in.Cantidad < 1 || in.Cantidad > 500 {
-		escribir(w, 400, map[string]string{"error": "cantidad entre 1 y 500"})
+	if in.Cantidad < 1 || in.Cantidad > 1000 {
+		escribir(w, 400, map[string]string{"error": "cantidad entre 1 y 1000"})
 		return
 	}
 	out := []string{}
