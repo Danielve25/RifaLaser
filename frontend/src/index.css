@@ -1,3 +1,72 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --fondo: #17100b;
+  --panel: #241610;
+  --ambar: #f5a524;
+}
+
+html {
+  background: var(--fondo);
+}
+
+body {
+  font-family: 'Chakra Petch', system-ui, sans-serif;
+  color: #f5e9d5;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, rgba(245, 165, 36, 0.08), transparent 60%),
+    repeating-linear-gradient(
+      93deg,
+      #17100b 0px,
+      #1a120c 14px,
+      #17100b 28px
+    );
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(245, 165, 36, 0.4);
+}
+
+:focus-visible {
+  outline: 2px solid #ffc53d;
+  outline-offset: 2px;
+}
+
+@layer components {
+  .pantalla {
+    @apply min-h-screen text-crema p-4;
+  }
+  .caja {
+    @apply w-full max-w-sm rounded-2xl bg-madera-800 border border-ambar/20 p-6 space-y-4 shadow-carta;
+  }
+  .titulo-pagina {
+    @apply font-display text-2xl md:text-3xl tracking-wide text-crema;
+  }
+  .etiqueta {
+    @apply block text-xs font-semibold uppercase tracking-wider text-piedra mb-1;
+  }
+  .input-taller {
+    @apply w-full rounded-lg bg-black/50 border border-ambar/25 px-3 py-2.5 text-crema placeholder:text-stone-500 transition-colors focus:border-ambar;
+  }
+  .btn-ambar {
+    @apply w-full rounded-lg bg-ambar text-madera-950 font-bold py-2.5 min-h-[44px] transition-all hover:bg-ambar-brillo active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer;
+  }
+  .btn-borde {
+    @apply rounded-lg border border-ambar/40 text-ambar-suave font-semibold py-2.5 px-4 min-h-[44px] transition-colors hover:border-ambar hover:bg-ambar/10 active:scale-[0.98] cursor-pointer;
+  }
+  .nota {
+    @apply rounded-xl border border-ambar/20 bg-madera-800 p-4 text-sm text-stone-300;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

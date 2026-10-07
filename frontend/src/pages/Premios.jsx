@@ -1,16 +1,26 @@
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import OrderCard from '../components/OrderCard'
+import { Titulo } from '../components/Titulo'
 import { api } from '../api/client'
 
 export default function Premios() {
-  const { data } = useQuery({ queryKey: ['premios'], queryFn: () => api('/my/orders') })
+  const { data, isLoading } = useQuery({ queryKey: ['premios'], queryFn: () => api('/my/orders') })
   const orders = data?.orders ?? []
 
   return (
-    <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
+    <main className="pantalla">
       <div className="max-w-lg mx-auto space-y-4">
-        <h1 className="text-2xl font-black">Mis premios</h1>
-        {orders.length === 0 && <p className="text-stone-400">Aún no ganas nada. Canjea un código y juega.</p>}
+        <Titulo subtitulo={orders.length > 0 ? `${orders.length} ${orders.length === 1 ? 'premio ganado' : 'premios ganados'}.` : undefined}>
+          Mis premios
+        </Titulo>
+        {isLoading && <p className="text-piedra">Buscando premios...</p>}
+        {!isLoading && orders.length === 0 && (
+          <div className="nota space-y-2">
+            <p>Aún no ganas nada.</p>
+            <Link to="/canjear" className="btn-borde inline-block">Canjear un código</Link>
+          </div>
+        )}
         {orders.map((o) => (
           <OrderCard key={o.id} order={o} />
         ))}
