@@ -54,6 +54,7 @@ function Barra() {
   return (
     <nav className="bg-[#241610] border-b border-amber-500/20 text-amber-100 px-4 py-2 flex gap-4 text-sm items-center">
       <Link to="/jugar" className="font-black text-amber-400">Rifa Láser</Link>
+      <Link to="/canjear">Canjear</Link>
       <Link to="/jugar/galeria">Galería</Link>
       <Link to="/jugar/ruleta">Ruleta</Link>
       <Link to="/mis-premios">Premios</Link>
