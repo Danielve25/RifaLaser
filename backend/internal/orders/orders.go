@@ -21,6 +21,7 @@ type Pedido struct {
 	CodigoVisual     string `json:"codigo_visual"`
 	Tema             string `json:"tema"`
 	Producto         string `json:"producto"`
+	ProductoImagen   string `json:"producto_imagen"`
 	EsRaro           bool   `json:"es_raro"`
 	DireccionEntrega string `json:"direccion_entrega"`
 	Estado           string `json:"estado"`
@@ -63,11 +64,11 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 	if tEstado != "disponible" {
 		return out, 409, "esa boleta ya se ocupo", false
 	}
-	var prodNombre, prodDesc string
+	var prodNombre, prodDesc, prodImg string
 	var esRaro bool
 	_ = tx.QueryRow(r.Context(),
-		`SELECT nombre, descripcion, es_raro FROM products WHERE id=$1`, prodID,
-	).Scan(&prodNombre, &prodDesc, &esRaro)
+		`SELECT nombre, descripcion, es_raro, imagen_url FROM products WHERE id=$1`, prodID,
+	).Scan(&prodNombre, &prodDesc, &esRaro, &prodImg)
 	var nombre, whatsapp, direccion string
 	_ = tx.QueryRow(r.Context(),
 		`SELECT nombre, whatsapp, direccion FROM users WHERE id=$1`, userID,
@@ -86,9 +87,9 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 	// la direccion queda fija en el pedido aunque el perfil cambie despues
 	err = tx.QueryRow(r.Context(),
 		`INSERT INTO orders(ticket_id, user_id, producto_id, producto_nombre, producto_descripcion,
-		 es_raro, nombre, whatsapp, direccion_entrega, estado, entrega_estimada)
-		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'ganado',$10)
-		 RETURNING id, ganado_at`, tID, userID, prodID, prodNombre, prodDesc,
+		 producto_imagen, es_raro, nombre, whatsapp, direccion_entrega, estado, entrega_estimada)
+		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'ganado',$11)
+		 RETURNING id, ganado_at`, tID, userID, prodID, prodNombre, prodDesc, prodImg,
 		esRaro, nombre, whatsapp, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
@@ -102,7 +103,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 	}
 	out = Pedido{
 		ID: orderID, TicketID: tID, CodigoVisual: visual, Tema: tema,
-		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,
+		Producto: prodNombre, ProductoImagen: prodImg, EsRaro: esRaro, DireccionEntrega: direccion,
 		Estado: "ganado", GanadoAt: ganadoTime.Format(time.RFC3339), EntregaEstimada: estimada,
 	}
 	agotado := libres == 0
@@ -138,8 +139,8 @@ func (m *Manejador) Mios(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := m.DB.Query(r.Context(),
-		`SELECT o.id, o.ticket_id, t.codigo_visual, t.tema, o.producto_nombre, o.es_raro,
-			o.direccion_entrega, o.estado, o.ganado_at::text, o.entrega_estimada::text
+		`SELECT o.id, o.ticket_id, t.codigo_visual, t.tema, o.producto_nombre, o.producto_imagen,
+			o.es_raro, o.direccion_entrega, o.estado, o.ganado_at::text, o.entrega_estimada::text
 		 FROM orders o JOIN tickets t ON t.id=o.ticket_id
 		 WHERE o.user_id=$1 ORDER BY o.id DESC`, u.ID)
 	if err != nil {
@@ -150,7 +151,7 @@ func (m *Manejador) Mios(w http.ResponseWriter, r *http.Request) {
 	out := []Pedido{}
 	for rows.Next() {
 		var p Pedido
-		_ = rows.Scan(&p.ID, &p.TicketID, &p.CodigoVisual, &p.Tema, &p.Producto,
+		_ = rows.Scan(&p.ID, &p.TicketID, &p.CodigoVisual, &p.Tema, &p.Producto, &p.ProductoImagen,
 			&p.EsRaro, &p.DireccionEntrega, &p.Estado, &p.GanadoAt, &p.EntregaEstimada)
 		out = append(out, p)
 	}

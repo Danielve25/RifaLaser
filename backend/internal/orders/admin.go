@@ -16,8 +16,8 @@ type PedidoAdmin struct {
 
 func (m *Manejador) ListaAdmin(w http.ResponseWriter, r *http.Request) {
 	rows, err := m.DB.Query(r.Context(),
-		`SELECT o.id, o.ticket_id, t.codigo_visual, t.tema, o.producto_nombre, o.es_raro,
-			o.direccion_entrega, o.estado, o.ganado_at::text, o.entrega_estimada::text,
+		`SELECT o.id, o.ticket_id, t.codigo_visual, t.tema, o.producto_nombre, o.producto_imagen,
+			o.es_raro, o.direccion_entrega, o.estado, o.ganado_at::text, o.entrega_estimada::text,
 			o.nombre, o.whatsapp
 		 FROM orders o JOIN tickets t ON t.id=o.ticket_id
 		 ORDER BY o.id DESC`)
@@ -29,7 +29,7 @@ func (m *Manejador) ListaAdmin(w http.ResponseWriter, r *http.Request) {
 	out := []PedidoAdmin{}
 	for rows.Next() {
 		var p PedidoAdmin
-		_ = rows.Scan(&p.ID, &p.TicketID, &p.CodigoVisual, &p.Tema, &p.Producto,
+		_ = rows.Scan(&p.ID, &p.TicketID, &p.CodigoVisual, &p.Tema, &p.Producto, &p.ProductoImagen,
 			&p.EsRaro, &p.DireccionEntrega, &p.Estado, &p.GanadoAt, &p.EntregaEstimada,
 			&p.Nombre, &p.Whatsapp)
 		out = append(out, p)

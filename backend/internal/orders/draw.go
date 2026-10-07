@@ -99,11 +99,11 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 409, map[string]string{"error": "intenta de nuevo"})
 		return
 	}
-	var prodNombre, prodDesc string
+	var prodNombre, prodDesc, prodImg string
 	var esRaro bool
 	_ = tx.QueryRow(r.Context(),
-		`SELECT nombre, descripcion, es_raro FROM products WHERE id=$1`, prodID,
-	).Scan(&prodNombre, &prodDesc, &esRaro)
+		`SELECT nombre, descripcion, es_raro, imagen_url FROM products WHERE id=$1`, prodID,
+	).Scan(&prodNombre, &prodDesc, &esRaro, &prodImg)
 	var nombre, whatsapp, direccion string
 	_ = tx.QueryRow(r.Context(),
 		`SELECT nombre, whatsapp, direccion FROM users WHERE id=$1`, u.ID,
@@ -123,9 +123,9 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	// la direccion queda fija en el pedido aunque el perfil cambie despues
 	err = tx.QueryRow(r.Context(),
 		`INSERT INTO orders(ticket_id, user_id, producto_id, producto_nombre, producto_descripcion,
-		 es_raro, nombre, whatsapp, direccion_entrega, estado, entrega_estimada)
-		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'ganado',$10)
-		 RETURNING id, ganado_at`, ticketID, u.ID, prodID, prodNombre, prodDesc,
+		 producto_imagen, es_raro, nombre, whatsapp, direccion_entrega, estado, entrega_estimada)
+		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'ganado',$11)
+		 RETURNING id, ganado_at`, ticketID, u.ID, prodID, prodNombre, prodDesc, prodImg,
 		esRaro, nombre, whatsapp, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
@@ -142,7 +142,7 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	ws.AnunciaOcupada(ticketID, orderID, libres == 0)
 	escribir(w, 200, map[string]any{"order": Pedido{
 		ID: orderID, TicketID: ticketID, CodigoVisual: visual, Tema: tema,
-		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,
+		Producto: prodNombre, ProductoImagen: prodImg, EsRaro: esRaro, DireccionEntrega: direccion,
 		Estado: "ganado", GanadoAt: ganadoTime.Format(time.RFC3339), EntregaEstimada: estimada,
 	}})
 }
