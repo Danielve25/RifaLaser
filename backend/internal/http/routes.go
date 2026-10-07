@@ -10,6 +10,7 @@ import (
 
 	"rifa-laser/backend/internal/auth"
 	"rifa-laser/backend/internal/codes"
+	"rifa-laser/backend/internal/orders"
 	"rifa-laser/backend/internal/products"
 	"rifa-laser/backend/internal/rounds"
 )
@@ -20,6 +21,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 	ph := &products.Manejador{DB: db}
 	rh := &rounds.Manejador{DB: db}
 	ch := &codes.Manejador{DB: db}
+	oh := &orders.Manejador{DB: db}
 
 	r.Get("/health", func(w nethttp.ResponseWriter, req *nethttp.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -44,6 +46,12 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Use(auth.PedirLogin)
 		x.Get("/active", rh.Activa)
 		x.Get("/{id}/tickets", rh.Boletas)
+		x.Post("/{id}/pick", oh.Escoger)
+	})
+
+	r.Route("/my", func(x chi.Router) {
+		x.Use(auth.PedirLogin)
+		x.Get("/orders", oh.Mios)
 	})
 
 	r.Route("/admin", func(x chi.Router) {
