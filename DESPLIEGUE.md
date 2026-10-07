@@ -1,0 +1,89 @@
+# DESPLIEGUE — Rifa Láser
+
+Solo comandos. Nada aquí se ejecutó al escribir esto.
+
+## Piezas sueltas
+
+- `backend/` Go. Solo sirve `/api/*` y `/ws/*`. Nunca sirve el `dist`.
+- `frontend/` Vite. Solo habla por `VITE_API_URL` y `VITE_WS_URL`.
+- Postgres aparte, con la URL que ya tienes.
+
+## 1. Base de datos
+
+```bash
+# crea la base vacía (una vez)
+createdb rifa_laser
+```
+
+```bash
+# sube las tablas (desde backend/)
+cd backend
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable" \
+  go run github.com/pressly/goose/v3/cmd/goose@v3.24.3 \
+  -dir ../db/migrations postgres "$DATABASE_URL" up
+```
+
+Bajar (solo si hay que empezar de cero):
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres?sslmode=disable" \
+  go run github.com/pressly/goose/v3/cmd/goose@v3.24.3 \
+  -dir ../db/migrations postgres "$DATABASE_URL" down
+```
+
+## 2. Backend
+
+```bash
+cd backend
+cp .env.example .env
+# edita .env: PORT, DATABASE_URL, JWT_SECRET (mínimo 32 letras), CORS_ORIGIN
+go vet ./...
+go run ./cmd/api
+```
+
+Queda en `http://localhost:8080`. Salud en `GET /api/health`.
+
+## 3. Frontend
+
+```bash
+cd frontend
+cp .env.example .env
+# edita .env: VITE_API_URL=http://localhost:8080/api, VITE_WS_URL=ws://localhost:8080/ws
+npm install
+npm run build
+npm run dev -- --port 5173
+```
+
+Queda en `http://localhost:5173`. El `dist/` se sirve con cualquier hosting
+estático aparte, nunca desde el Go.
+
+## 4. Primer admin
+
+Regístrate normal en `/registro` y luego en la base:
+
+```sql
+UPDATE users SET is_admin = true WHERE email = 'tu-correo@ejemplo.com';
+```
+
+## 5. Abrir una ronda (como admin)
+
+1. `POST /api/admin/products` varios, hasta que el stock sume 100.
+2. `POST /api/admin/rounds` `{}`.
+3. `POST /api/admin/rounds/:id/generate-tickets`.
+4. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
+
+## 6. Juego (como cliente)
+
+1. `/registro` con nombre, WhatsApp, correo, dirección y clave.
+2. `/canjear` mete un código por jugada, repite para más jugadas.
+3. `/jugar/galeria` escoge tarjeta o `/jugar/ruleta` gira.
+4. `/mis-premios` muestra cada premio con entrega en 5 días y fecha.
+
+## Notas
+
+- Todo lo que cambia datos va por REST con `SELECT FOR UPDATE`. El socket
+  solo avisa (`ticket_ocupada`, `ronda_cerrada`, `pedido_creado`).
+- Si el socket se cae, el frontend sigue por polling cada 10 segundos.
+- Ante fallo de red el cliente reintenta una vez; el 409 se muestra tal cual.
+- Límites: login 10/min y canje 20/min por IP.
+- La ronda cierra sola al ocuparse las 100.
