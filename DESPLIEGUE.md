@@ -62,7 +62,7 @@ estático aparte, nunca desde el Go.
 Regístrate normal en `/registro` y luego en la base:
 
 ```sql
-UPDATE users SET is_admin = true WHERE email = 'tu-correo@ejemplo.com';
+UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
 ```
 
 ## 5. Abrir una ronda (como admin)
@@ -74,7 +74,8 @@ UPDATE users SET is_admin = true WHERE email = 'tu-correo@ejemplo.com';
 
 ## 6. Juego (como cliente)
 
-1. `/registro` con nombre, WhatsApp, correo, dirección y clave.
+1. `/registro` con nombre, teléfono, dirección y clave. El teléfono es único:
+   sirve para entrar y para avisarte por WhatsApp.
 2. `/canjear` mete un código por jugada, repite para más jugadas.
 3. `/jugar/galeria` escoge tarjeta o `/jugar/ruleta` gira.
 4. `/mis-premios` muestra cada premio con entrega en 5 días y fecha.

@@ -7,8 +7,7 @@ import { usarSesion } from '../store/sesion'
 
 const esquema = z.object({
   nombre: z.string().min(2, 'nombre muy corto'),
-  whatsapp: z.string().min(6, 'whatsapp muy corto'),
-  email: z.string().email('revisa el correo'),
+  whatsapp: z.string().min(6, 'teléfono muy corto'),
   direccion: z.string().min(5, 'dirección muy corta'),
   password: z.string().min(6, 'mínimo 6 letras'),
 })
@@ -29,13 +28,14 @@ export default function Registro() {
   }
 
   const campo = 'w-full rounded bg-black/40 border border-amber-500/20 px-3 py-2'
+  const nombres = { nombre: 'nombre', whatsapp: 'teléfono', direccion: 'dirección' }
   return (
     <main className="min-h-screen bg-[#17100B] text-amber-100 flex items-center justify-center p-4">
       <form onSubmit={handleSubmit(va)} className="w-full max-w-sm rounded-xl bg-[#241610] border border-amber-500/20 p-6 space-y-3">
         <h1 className="text-2xl font-black">Crea tu cuenta</h1>
-        {['nombre', 'whatsapp', 'email', 'direccion'].map((c) => (
+        {['nombre', 'whatsapp', 'direccion'].map((c) => (
           <div key={c}>
-            <input {...register(c)} placeholder={c} className={campo} />
+            <input {...register(c)} placeholder={nombres[c]} className={campo} />
             {formState.errors[c] && <p className="text-xs text-red-400">{formState.errors[c].message}</p>}
           </div>
         ))}

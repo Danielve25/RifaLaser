@@ -20,7 +20,7 @@ func servidorPrueba() *httptest.Server {
 }
 
 func TestAvisoLlega(t *testing.T) {
-	u := auth.Usuario{ID: 7, Email: "x@y.com"}
+	u := auth.Usuario{ID: 7, Whatsapp: "3000000001"}
 	token, err := auth.CrearToken(u)
 	if err != nil {
 		t.Fatal(err)
