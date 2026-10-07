@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -9,6 +10,9 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+
+	"rifa-laser/backend/internal/db"
+	apihttp "rifa-laser/backend/internal/http"
 )
 
 func main() {
@@ -24,6 +28,16 @@ func main() {
 		corsOrigin = "http://localhost:5173"
 	}
 
+	ctx := context.Background()
+	pool, err := db.Connect(ctx)
+	if err != nil {
+		log.Fatal().Err(err).Msg("no hay base de datos")
+	}
+	defer pool.Close()
+	if err := pool.Ping(ctx); err != nil {
+		log.Fatal().Err(err).Msg("la base no responde")
+	}
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
@@ -34,10 +48,8 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	r.Get("/api/health", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"ok":true,"servicio":"rifa-laser"}`))
-	})
+	r.Mount("/api", apihttp.Rutas(pool))
+	r.Mount("/ws", apihttp.RutasWS())
 
 	log.Info().Str("port", port).Msg("backend rifa-laser listo")
 	if err := http.ListenAndServe(":"+port, r); err != nil {
