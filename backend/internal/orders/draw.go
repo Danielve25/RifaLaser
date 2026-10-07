@@ -108,10 +108,10 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	_ = tx.QueryRow(r.Context(),
 		`SELECT nombre, descripcion, es_raro FROM products WHERE id=$1`, prodID,
 	).Scan(&prodNombre, &prodDesc, &esRaro)
-	var nombre, whatsapp, email, direccion string
+	var nombre, whatsapp, direccion string
 	_ = tx.QueryRow(r.Context(),
-		`SELECT nombre, whatsapp, email, direccion FROM users WHERE id=$1`, u.ID,
-	).Scan(&nombre, &whatsapp, &email, &direccion)
+		`SELECT nombre, whatsapp, direccion FROM users WHERE id=$1`, u.ID,
+	).Scan(&nombre, &whatsapp, &direccion)
 	var visual, tema string
 	_, err = tx.Exec(r.Context(),
 		`UPDATE tickets SET estado='ocupada', ocupada_por=$2, codigo_canje_id=$3 WHERE id=$1`,
@@ -127,10 +127,10 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 	// la direccion queda fija en el pedido aunque el perfil cambie despues
 	err = tx.QueryRow(r.Context(),
 		`INSERT INTO orders(ticket_id, user_id, producto_id, producto_nombre, producto_descripcion,
-		 es_raro, nombre, whatsapp, email, direccion_entrega, estado, entrega_estimada)
-		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'ganado',$11)
+		 es_raro, nombre, whatsapp, direccion_entrega, estado, entrega_estimada)
+		 VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'ganado',$10)
 		 RETURNING id, ganado_at`, ticketID, u.ID, prodID, prodNombre, prodDesc,
-		esRaro, nombre, whatsapp, email, direccion, estimada,
+		esRaro, nombre, whatsapp, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})

@@ -12,14 +12,13 @@ type PedidoAdmin struct {
 	Pedido
 	Nombre   string `json:"nombre"`
 	Whatsapp string `json:"whatsapp"`
-	Email    string `json:"email"`
 }
 
 func (m *Manejador) ListaAdmin(w http.ResponseWriter, r *http.Request) {
 	rows, err := m.DB.Query(r.Context(),
 		`SELECT o.id, o.ticket_id, t.codigo_visual, t.tema, o.producto_nombre, o.es_raro,
 			o.direccion_entrega, o.estado, o.ganado_at::text, o.entrega_estimada::text,
-			o.nombre, o.whatsapp, o.email
+			o.nombre, o.whatsapp
 		 FROM orders o JOIN tickets t ON t.id=o.ticket_id
 		 ORDER BY o.id DESC`)
 	if err != nil {
@@ -32,7 +31,7 @@ func (m *Manejador) ListaAdmin(w http.ResponseWriter, r *http.Request) {
 		var p PedidoAdmin
 		_ = rows.Scan(&p.ID, &p.TicketID, &p.CodigoVisual, &p.Tema, &p.Producto,
 			&p.EsRaro, &p.DireccionEntrega, &p.Estado, &p.GanadoAt, &p.EntregaEstimada,
-			&p.Nombre, &p.Whatsapp, &p.Email)
+			&p.Nombre, &p.Whatsapp)
 		out = append(out, p)
 	}
 	escribir(w, 200, map[string]any{"orders": out})
