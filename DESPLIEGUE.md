@@ -67,8 +67,9 @@ UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
 
 ## 5. Producir y jugar (como admin)
 
-1. `POST /api/admin/products` con lo que se produjo. Cada producto crea sus
-   boletas de una vez, con tema al azar que no dice el premio.
+1. `POST /api/admin/products` con lo que se produjo: nombre, stock y URL de
+   la foto del premio. Cada producto crea sus boletas de una vez, con tema
+   al azar que no dice el premio.
 2. Si algo quedó a medias, `POST /api/admin/stock/sincronizar` completa lo que falte.
 3. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
 

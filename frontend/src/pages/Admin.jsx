@@ -31,7 +31,7 @@ export default function Admin() {
   const [pestana, setPestana] = useState('pedidos')
   const [cantidad, setCantidad] = useState(10)
   const [filtro, setFiltro] = useState('todos')
-  const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false })
+  const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false, imagen_url: '' })
 
   const pedidos = useQuery({ queryKey: ['admin-orders'], queryFn: () => api('/admin/orders') })
   const productos = useQuery({ queryKey: ['admin-products'], queryFn: () => api('/admin/products') })
@@ -75,7 +75,7 @@ export default function Admin() {
       method: 'POST',
       body: JSON.stringify({ ...nuevo, stock_inicial: Number(nuevo.stock_inicial) }),
     })
-    setNuevo({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false })
+    setNuevo({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false, imagen_url: '' })
     qc.invalidateQueries({ queryKey: ['admin-products'] })
   }
 
@@ -185,6 +185,7 @@ export default function Admin() {
               <input value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} placeholder="Nombre" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <input value={nuevo.descripcion} onChange={(e) => setNuevo({ ...nuevo, descripcion: e.target.value })} placeholder="Descripción" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <input type="number" value={nuevo.stock_inicial} onChange={(e) => setNuevo({ ...nuevo, stock_inicial: e.target.value })} placeholder="Stock" className="w-24 border border-gray-300 rounded-md px-3 py-1.5" />
+              <input value={nuevo.imagen_url} onChange={(e) => setNuevo({ ...nuevo, imagen_url: e.target.value })} placeholder="URL de la foto" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <label className="text-sm flex items-center gap-1">
                 <input type="checkbox" checked={nuevo.es_raro} onChange={(e) => setNuevo({ ...nuevo, es_raro: e.target.checked })} /> Raro
               </label>
@@ -192,10 +193,15 @@ export default function Admin() {
             </form>
             <div className={`${tarjeta} p-0 overflow-x-auto`}>
               <table className="w-full">
-                <thead><tr><th className={th}>Producto</th><th className={th}>Stock</th><th className={th}>Raro</th></tr></thead>
+                <thead><tr><th className={th}>Foto</th><th className={th}>Producto</th><th className={th}>Stock</th><th className={th}>Raro</th></tr></thead>
                 <tbody>
                   {prods.map((p) => (
                     <tr key={p.id}>
+                      <td className={td}>
+                        {p.imagen_url
+                          ? <img src={p.imagen_url} alt={p.nombre} loading="lazy" className="w-12 h-12 rounded-md object-cover" />
+                          : <span className="text-gray-400 text-xs">sin foto</span>}
+                      </td>
                       <td className={td}>{p.nombre}<br /><span className="text-gray-500 text-xs">{p.descripcion}</span></td>
                       <td className={td}>{p.stock_inicial}</td>
                       <td className={td}>{p.es_raro ? 'Sí' : 'No'}</td>

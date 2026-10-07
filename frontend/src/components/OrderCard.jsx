@@ -1,3 +1,5 @@
+import { FotoPremio } from './FotoPremio'
+
 const estados = {
   ganado: 'bg-yellow-400/15 text-ambar-brillo border-yellow-400/30',
   preparacion: 'bg-sky-400/15 text-sky-300 border-sky-400/30',
@@ -12,15 +14,15 @@ function fechaCorta(iso) {
   return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function OrderCard({ order }) {
-  return (
+export default function OrderCard({ order }) {  return (
     <article
       className={
         order.es_raro
-          ? 'rounded-2xl p-4 bg-madera-700 border-2 border-ambar shadow-brasa'
-          : 'rounded-2xl p-4 bg-madera-800 border border-ambar/20 shadow-carta'
+          ? 'rounded-2xl p-4 bg-madera-700 border-2 border-ambar shadow-brasa space-y-3'
+          : 'rounded-2xl p-4 bg-madera-800 border border-ambar/20 shadow-carta space-y-3'
       }
     >
+      <FotoPremio src={order.producto_imagen} nombre={order.producto} />
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-display text-lg text-crema">{order.producto}</h3>
         {order.es_raro && (
