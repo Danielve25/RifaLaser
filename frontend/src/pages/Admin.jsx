@@ -21,7 +21,7 @@ export default function Admin() {
   const crearRonda = async () => {
     const r = await api('/admin/rounds', { method: 'POST', body: JSON.stringify({}) })
     await api(`/admin/rounds/${r.ronda.id}/generate-tickets`, { method: 'POST', body: JSON.stringify({}) })
-    alert('Ronda lista con 100 boletas.')
+    alert(`Ronda lista con ${r.ronda.total_tickets} boletas.`)
   }
 
   const cambiaEstado = async (id, estado) => {
@@ -38,12 +38,12 @@ export default function Admin() {
         <section className="rounded-xl bg-[#241610] border border-amber-500/20 p-4 space-y-2">
           <h2 className="font-bold">Ronda y códigos</h2>
           <div className="flex gap-2">
-            <button onClick={crearRonda} className="rounded bg-amber-500 text-[#17100B] font-bold px-4 py-2">Nueva ronda 100</button>
+            <button onClick={crearRonda} className="rounded bg-amber-500 text-[#17100B] font-bold px-4 py-2">Nueva ronda</button>
             <input type="number" value={cantidad} onChange={(e) => setCantidad(e.target.value)} className="w-20 rounded bg-black/40 border border-amber-500/20 px-2" />
             <button onClick={crearLote} className="rounded border border-amber-500/40 px-4 py-2">Lote códigos</button>
           </div>
           {lote.length > 0 && <p className="font-mono text-xs break-all">{lote.join(' · ')}</p>}
-          <p className="text-xs text-stone-500">Inventario: {(productos.data?.productos ?? []).map((p) => `${p.nombre}(${p.stock_inicial})`).join(' · ')}</p>
+          <p className="text-xs text-stone-500">Inventario: {(productos.data?.productos ?? []).map((p) => `${p.nombre}(${p.stock_inicial})`).join(' · ') || 'vacío'} · total {(productos.data?.productos ?? []).reduce((s, p) => s + p.stock_inicial, 0)}</p>
         </section>
         <section className="space-y-2">
           <h2 className="font-bold">Pedidos ({orders.length})</h2>

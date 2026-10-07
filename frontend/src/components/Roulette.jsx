@@ -34,7 +34,7 @@ export default function Roulette({ tickets, ganador, girando, onFin }) {
           background: 'conic-gradient(from 0deg, #2B1B12, #3A2415, #2B1B12, #3A2415)',
         }}
       >
-        {tickets.slice(0, 100).map((t, i) => (
+        {tickets.map((t, i) => (
           <span
             key={t.id}
             className="absolute top-1/2 left-1/2 font-mono text-[10px] text-amber-200/80"

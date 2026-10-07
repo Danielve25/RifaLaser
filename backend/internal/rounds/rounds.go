@@ -38,16 +38,15 @@ func escribir(w http.ResponseWriter, codigo int, v any) {
 }
 
 func (m *Manejador) Crear(w http.ResponseWriter, r *http.Request) {
-	var in struct {
-		Total int `json:"total_tickets"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&in)
-	total := in.Total
+	var total int
+	_ = m.DB.QueryRow(r.Context(), `SELECT COALESCE(SUM(stock_inicial),0) FROM products`).Scan(&total)
 	if total <= 0 {
-		total = 100
+		escribir(w, 400, map[string]string{"error": "primero carga el inventario"})
+		return
 	}
-	if total > 100 {
-		total = 100
+	if total > 5000 {
+		escribir(w, 400, map[string]string{"error": "mucho stock, parte la produccion"})
+		return
 	}
 	var x Ronda
 	err := m.DB.QueryRow(r.Context(),
@@ -109,10 +108,11 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type prod struct {
-		id    int
-		stock int
+		id     int
+		nombre string
+		stock  int
 	}
-	rows, err := m.DB.Query(r.Context(), `SELECT id, stock_inicial FROM products ORDER BY id`)
+	rows, err := m.DB.Query(r.Context(), `SELECT id, nombre, stock_inicial FROM products ORDER BY id`)
 	if err != nil {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
@@ -121,7 +121,7 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 	suma := 0
 	for rows.Next() {
 		var p prod
-		_ = rows.Scan(&p.id, &p.stock)
+		_ = rows.Scan(&p.id, &p.nombre, &p.stock)
 		ps = append(ps, p)
 		suma += p.stock
 	}
@@ -130,19 +130,13 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 400, map[string]string{"error": fmt.Sprintf("stock suma %d y la ronda pide %d", suma, total)})
 		return
 	}
-	if len(Temas) < total {
-		escribir(w, 500, map[string]string{"error": "faltan temas"})
-		return
-	}
-	bolsa := []int{}
+	bolsa := []prod{}
 	for _, p := range ps {
 		for i := 0; i < p.stock; i++ {
-			bolsa = append(bolsa, p.id)
+			bolsa = append(bolsa, p)
 		}
 	}
 	rand.Shuffle(len(bolsa), func(a, b int) { bolsa[a], bolsa[b] = bolsa[b], bolsa[a] })
-	temas := append([]string{}, Temas[:total]...)
-	rand.Shuffle(len(temas), func(a, b int) { temas[a], temas[b] = temas[b], temas[a] })
 
 	tx, err := m.DB.Begin(r.Context())
 	if err != nil {
@@ -150,11 +144,15 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback(r.Context())
+	ancho := len(strconv.Itoa(total))
+	if ancho < 3 {
+		ancho = 3
+	}
 	for i := 0; i < total; i++ {
-		visual := fmt.Sprintf("%03d", i+1)
+		visual := fmt.Sprintf("%0*d", ancho, i+1)
 		_, err = tx.Exec(r.Context(),
 			`INSERT INTO tickets(round_id, codigo_visual, tema, producto_id) VALUES($1,$2,$3,$4)`,
-			id, visual, temas[i], bolsa[i])
+			id, visual, bolsa[i].nombre, bolsa[i].id)
 		if err != nil {
 			escribir(w, 500, map[string]string{"error": "no se pudo"})
 			return
