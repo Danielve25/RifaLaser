@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { api } from '../api/client'
+import { api, subirFoto, urlFoto } from '../api/client'
 import { usarSesion } from '../store/sesion'
 
 const menu = [
@@ -31,7 +31,9 @@ export default function Admin() {
   const [pestana, setPestana] = useState('pedidos')
   const [cantidad, setCantidad] = useState(10)
   const [filtro, setFiltro] = useState('todos')
-  const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false, imagen_url: '' })
+  const [nuevo, setNuevo] = useState({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false })
+  const [archivo, setArchivo] = useState(null)
+  const [vista, setVista] = useState('')
 
   const pedidos = useQuery({ queryKey: ['admin-orders'], queryFn: () => api('/admin/orders') })
   const productos = useQuery({ queryKey: ['admin-products'], queryFn: () => api('/admin/products') })
@@ -69,13 +71,24 @@ export default function Admin() {
     qc.invalidateQueries({ queryKey: ['admin-orders'] })
   }
 
+  const eligeArchivo = (e) => {
+    const f = e.target.files?.[0] || null
+    setArchivo(f)
+    setVista(f ? URL.createObjectURL(f) : '')
+  }
+
   const creaProducto = async (e) => {
     e.preventDefault()
-    await api('/admin/products', {
+    const r = await api('/admin/products', {
       method: 'POST',
       body: JSON.stringify({ ...nuevo, stock_inicial: Number(nuevo.stock_inicial) }),
     })
-    setNuevo({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false, imagen_url: '' })
+    if (archivo) {
+      await subirFoto(`/admin/products/${r.producto.id}/foto`, archivo)
+    }
+    setNuevo({ nombre: '', descripcion: '', stock_inicial: '', es_raro: false })
+    setArchivo(null)
+    setVista('')
     qc.invalidateQueries({ queryKey: ['admin-products'] })
   }
 
@@ -185,11 +198,15 @@ export default function Admin() {
               <input value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} placeholder="Nombre" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <input value={nuevo.descripcion} onChange={(e) => setNuevo({ ...nuevo, descripcion: e.target.value })} placeholder="Descripción" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <input type="number" value={nuevo.stock_inicial} onChange={(e) => setNuevo({ ...nuevo, stock_inicial: e.target.value })} placeholder="Stock" className="w-24 border border-gray-300 rounded-md px-3 py-1.5" />
-              <input value={nuevo.imagen_url} onChange={(e) => setNuevo({ ...nuevo, imagen_url: e.target.value })} placeholder="URL de la foto" className="border border-gray-300 rounded-md px-3 py-1.5" />
+              <label className="border border-gray-300 rounded-md px-3 py-1.5 text-sm cursor-pointer">
+                {archivo ? archivo.name : 'Foto...'}
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={eligeArchivo} className="hidden" />
+              </label>
               <label className="text-sm flex items-center gap-1">
                 <input type="checkbox" checked={nuevo.es_raro} onChange={(e) => setNuevo({ ...nuevo, es_raro: e.target.checked })} /> Raro
               </label>
               <button className="rounded-md bg-[#008060] text-white font-medium px-4 py-1.5">Añadir</button>
+              {vista && <img src={vista} alt="vista previa" className="w-12 h-12 rounded-md object-cover" />}
             </form>
             <div className={`${tarjeta} p-0 overflow-x-auto`}>
               <table className="w-full">
@@ -199,7 +216,7 @@ export default function Admin() {
                     <tr key={p.id}>
                       <td className={td}>
                         {p.imagen_url
-                          ? <img src={p.imagen_url} alt={p.nombre} loading="lazy" className="w-12 h-12 rounded-md object-cover" />
+                          ? <img src={urlFoto(p.imagen_url)} alt={p.nombre} loading="lazy" className="w-12 h-12 rounded-md object-cover" />
                           : <span className="text-gray-400 text-xs">sin foto</span>}
                       </td>
                       <td className={td}>{p.nombre}<br /><span className="text-gray-500 text-xs">{p.descripcion}</span></td>

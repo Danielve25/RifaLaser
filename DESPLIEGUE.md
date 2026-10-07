@@ -42,6 +42,8 @@ go run ./cmd/api
 ```
 
 Queda en `http://localhost:8080`. Salud en `GET /api/health`.
+Las fotos viven en la carpeta `UPLOAD_DIR` (por defecto `uploads/` junto al
+backend) y se sirven en `/uploads/...`: métela en tus copias de seguridad.
 
 ## 3. Frontend
 
@@ -67,9 +69,10 @@ UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
 
 ## 5. Producir y jugar (como admin)
 
-1. `POST /api/admin/products` con lo que se produjo: nombre, stock y URL de
-   la foto del premio. Cada producto crea sus boletas de una vez, con tema
-   al azar que no dice el premio.
+1. `POST /api/admin/products` con lo que se produjo: nombre, stock y foto
+   (el panel la sube a `POST /api/admin/products/:id/foto`, jpg/png/webp de
+   5MB máximo). Cada producto crea sus boletas de una vez, con tema al azar
+   que no dice el premio.
 2. Si algo quedó a medias, `POST /api/admin/stock/sincronizar` completa lo que falte.
 3. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
 

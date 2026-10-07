@@ -12,3 +12,5 @@ backend/*.out
 *.test
 frontend/dist/
 .DS_Store
+# fotos que sube el admin (van con el servidor, no con el codigo)
+backend/uploads/

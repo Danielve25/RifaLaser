@@ -60,6 +60,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Use(auth.PedirAdmin)
 		x.Post("/products", ph.Crear)
 		x.Get("/products", ph.Listar)
+		x.Post("/products/{id}/foto", ph.SubirFoto)
 		x.Post("/stock/sincronizar", bh.Sincronizar)
 		x.Post("/codes/batch", ch.Lote)
 		x.Get("/codes", ch.Lista)

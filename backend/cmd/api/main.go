@@ -51,6 +51,15 @@ func main() {
 	r.Mount("/api", apihttp.Rutas(pool))
 	r.Mount("/ws", apihttp.RutasWS())
 
+	subidas := os.Getenv("UPLOAD_DIR")
+	if subidas == "" {
+		subidas = "uploads"
+	}
+	if err := os.MkdirAll(subidas, 0o755); err != nil {
+		log.Fatal().Err(err).Msg("no hay carpeta de fotos")
+	}
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(subidas))))
+
 	log.Info().Str("port", port).Msg("backend rifa-laser listo")
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatal().Err(err).Msg("no pudo arrancar")
