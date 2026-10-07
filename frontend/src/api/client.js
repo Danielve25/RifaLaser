@@ -26,7 +26,7 @@ export async function api(path, opts = {}) {
   }
 }
 
-export const wsUrl = (rondaId, token) => {
+export const wsUrl = (token) => {
   const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'
-  return `${base}/rounds/${rondaId}?token=${token}`
+  return `${base}?token=${token}`
 }

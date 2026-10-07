@@ -7,7 +7,6 @@ const menu = [
   ['pedidos', 'Pedidos'],
   ['codigos', 'Códigos'],
   ['productos', 'Productos'],
-  ['rondas', 'Rondas'],
 ]
 
 const tarjeta = 'bg-white rounded-lg shadow-sm border border-gray-200 p-4'
@@ -37,7 +36,7 @@ export default function Admin() {
   const pedidos = useQuery({ queryKey: ['admin-orders'], queryFn: () => api('/admin/orders') })
   const productos = useQuery({ queryKey: ['admin-products'], queryFn: () => api('/admin/products') })
   const codigos = useQuery({ queryKey: ['admin-codes'], queryFn: () => api('/admin/codes') })
-  const ronda = useQuery({ queryKey: ['admin-ronda'], queryFn: () => api('/rounds/active') })
+  const stock = useQuery({ queryKey: ['admin-stock'], queryFn: () => api('/tickets/estado') })
 
   if (!usuario?.es_admin) return <main className="min-h-screen bg-[#f6f6f7] p-4">Solo admin.</main>
 
@@ -51,7 +50,7 @@ export default function Admin() {
     qc.invalidateQueries({ queryKey: ['admin-orders'] })
     qc.invalidateQueries({ queryKey: ['admin-codes'] })
     qc.invalidateQueries({ queryKey: ['admin-products'] })
-    qc.invalidateQueries({ queryKey: ['admin-ronda'] })
+    qc.invalidateQueries({ queryKey: ['admin-stock'] })
   }
 
   const crearLote = async () => {
@@ -59,9 +58,9 @@ export default function Admin() {
     refresca()
   }
 
-  const crearRonda = async () => {
-    const r = await api('/admin/rounds', { method: 'POST', body: JSON.stringify({}) })
-    await api(`/admin/rounds/${r.ronda.id}/generate-tickets`, { method: 'POST', body: JSON.stringify({}) })
+  const sincroniza = async () => {
+    const r = await api('/admin/stock/sincronizar', { method: 'POST', body: JSON.stringify({}) })
+    alert(`Boletas listas: ${r.creadas} nuevas.`)
     refresca()
   }
 
@@ -176,6 +175,12 @@ export default function Admin() {
         {pestana === 'productos' && (
           <div className="space-y-4">
             <h1 className="text-xl font-bold">Productos · stock total {stockTotal}</h1>
+            <div className={`${tarjeta} flex flex-wrap gap-3 items-center`}>
+              <p className="text-sm text-gray-600">
+                Boletas: {stock.data?.stock?.total ?? 0} · libres {stock.data?.stock?.disponibles ?? 0} · ocupadas {stock.data?.stock?.ocupadas ?? 0}
+              </p>
+              <button onClick={sincroniza} className="ml-auto rounded-md bg-[#008060] text-white font-medium px-4 py-1.5">Sincronizar boletas</button>
+            </div>
             <form onSubmit={creaProducto} className={`${tarjeta} flex flex-wrap gap-2 items-end`}>
               <input value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} placeholder="Nombre" className="border border-gray-300 rounded-md px-3 py-1.5" />
               <input value={nuevo.descripcion} onChange={(e) => setNuevo({ ...nuevo, descripcion: e.target.value })} placeholder="Descripción" className="border border-gray-300 rounded-md px-3 py-1.5" />
@@ -202,20 +207,6 @@ export default function Admin() {
           </div>
         )}
 
-        {pestana === 'rondas' && (
-          <div className="space-y-4">
-            <h1 className="text-xl font-bold">Rondas</h1>
-            <div className={tarjeta}>
-              <p className="text-sm text-gray-600">
-                {ronda.data?.ronda
-                  ? `Activa #${ronda.data.ronda.id} · ${ronda.data.ronda.total_tickets} boletas · ${ronda.data.ronda.estado}`
-                  : 'Sin ronda activa.'}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">El total sale solo: suma del stock ({stockTotal}).</p>
-              <button onClick={crearRonda} className="mt-3 rounded-md bg-[#008060] text-white font-medium px-4 py-1.5">Nueva ronda</button>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   )
