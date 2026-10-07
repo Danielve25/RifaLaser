@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 
-// ruleta propia: solo anima el resultado que ya dio el sorteo
-export default function Roulette({ tickets, ganador, girando, onFin }) {
+// ruleta propia: solo anima el resultado que ya dio el sorteo.
+// indice queda fijo al girar para que el polling no lo mueva.
+export default function Roulette({ tickets, indice, girando, onFin }) {
   const [angulo, setAngulo] = useState(0)
   const finRef = useRef(onFin)
   finRef.current = onFin
 
   const n = Math.max(tickets.length, 1)
   const paso = 360 / n
-  const idx = tickets.findIndex((t) => ganador && t.id === ganador.ticket_id)
 
   useEffect(() => {
-    if (!girando || idx < 0) return
+    if (!girando || indice < 0) return
     const vueltas = 5 * 360
-    const destino = vueltas + (360 - idx * paso)
+    const destino = vueltas + (360 - indice * paso)
     setAngulo(destino)
     const t = setTimeout(() => finRef.current?.(), 4200)
     return () => clearTimeout(t)
-  }, [girando, idx, paso])
+  }, [girando, indice, paso])
 
   useEffect(() => {
     if (!girando) setAngulo(0)
