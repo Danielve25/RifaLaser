@@ -137,6 +137,8 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	rand.Shuffle(len(bolsa), func(a, b int) { bolsa[a], bolsa[b] = bolsa[b], bolsa[a] })
+	// la carta va volteada: el tema no dice el premio
+	temas := temasAlAzar(total)
 
 	tx, err := m.DB.Begin(r.Context())
 	if err != nil {
@@ -152,7 +154,7 @@ func (m *Manejador) Generar(w http.ResponseWriter, r *http.Request) {
 		visual := fmt.Sprintf("%0*d", ancho, i+1)
 		_, err = tx.Exec(r.Context(),
 			`INSERT INTO tickets(round_id, codigo_visual, tema, producto_id) VALUES($1,$2,$3,$4)`,
-			id, visual, bolsa[i].nombre, bolsa[i].id)
+			id, visual, temas[i], bolsa[i].id)
 		if err != nil {
 			escribir(w, 500, map[string]string{"error": "no se pudo"})
 			return
