@@ -30,3 +30,28 @@ export const wsUrl = (token) => {
   const base = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'
   return `${base}?token=${token}`
 }
+
+// la foto puede ser URL externa o archivo del servidor (/uploads/...)
+export function urlFoto(ruta) {
+  if (!ruta) return ''
+  if (/^https?:\/\//i.test(ruta)) return ruta
+  try {
+    return new URL(BASE).origin + ruta
+  } catch {
+    return ruta
+  }
+}
+
+// subida de archivo: sin Content-Type json para que vaya el borde
+export async function subirFoto(path, archivo) {
+  const forma = new FormData()
+  forma.append('foto', archivo)
+  const r = await fetch(BASE + path, { method: 'POST', credentials: 'include', body: forma })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) {
+    const e = new Error(data.error || 'fallo')
+    e.status = r.status
+    throw e
+  }
+  return data
+}
