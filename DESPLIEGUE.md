@@ -65,14 +65,12 @@ Regístrate normal en `/registro` y luego en la base:
 UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
 ```
 
-## 5. Abrir una ronda (como admin)
+## 5. Producir y jugar (como admin)
 
-1. `POST /api/admin/products` con lo que se produjo. El total de la ronda
-   es la suma del stock (100 hoy, 200 mañana, lo que haya).
-2. `POST /api/admin/rounds` `{}` crea la ronda con ese total.
-3. `POST /api/admin/rounds/:id/generate-tickets` reparte una boleta por
-   unidad de stock. La carta va volteada: el tema es al azar y no dice el premio.
-4. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
+1. `POST /api/admin/products` con lo que se produjo. Cada producto crea sus
+   boletas de una vez, con tema al azar que no dice el premio.
+2. Si algo quedó a medias, `POST /api/admin/stock/sincronizar` completa lo que falte.
+3. `POST /api/admin/codes/batch` `{"cantidad": N}` y reparte los `LSR-XXXX` por WhatsApp.
 
 ## 6. Juego (como cliente)
 
@@ -85,8 +83,9 @@ UPDATE users SET is_admin = true WHERE whatsapp = '3000000001';
 ## Notas
 
 - Todo lo que cambia datos va por REST con `SELECT FOR UPDATE`. El socket
-  solo avisa (`ticket_ocupada`, `ronda_cerrada`, `pedido_creado`).
+  solo avisa (`ticket_ocupada`, `stock_agotado`, `pedido_creado`).
 - Si el socket se cae, el frontend sigue por polling cada 10 segundos.
 - Ante fallo de red el cliente reintenta una vez; el 409 se muestra tal cual.
 - Límites: login 10/min y canje 20/min por IP.
-- La ronda cierra sola al ocuparse todas sus boletas.
+- Todo el stock juega a la vez, sin rondas. Cuando se ocupa la última boleta
+  se avisa `stock_agotado`.

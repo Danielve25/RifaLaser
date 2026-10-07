@@ -3,10 +3,8 @@ package orders
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"rifa-laser/backend/internal/auth"
@@ -36,7 +34,7 @@ func escribir(w http.ResponseWriter, codigo int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketID, roundID, userID int) (Pedido, int, string, bool) {
+func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketID, userID int) (Pedido, int, string, bool) {
 	var out Pedido
 	tx, err := m.DB.Begin(r.Context())
 	if err != nil {
@@ -55,16 +53,12 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 	}
 	var tID, prodID int
 	var tEstado string
-	var tRound int
 	// lock de la boleta pedida
 	err = tx.QueryRow(r.Context(),
-		`SELECT id, round_id, producto_id, estado FROM tickets WHERE id=$1 FOR UPDATE`, ticketID,
-	).Scan(&tID, &tRound, &prodID, &tEstado)
+		`SELECT id, producto_id, estado FROM tickets WHERE id=$1 FOR UPDATE`, ticketID,
+	).Scan(&tID, &prodID, &tEstado)
 	if err != nil {
 		return out, 404, "esa boleta no existe", false
-	}
-	if tRound != roundID {
-		return out, 400, "esa boleta no es de esta ronda", false
 	}
 	if tEstado != "disponible" {
 		return out, 409, "esa boleta ya se ocupo", false
@@ -102,10 +96,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 	}
 	var libres int
 	_ = tx.QueryRow(r.Context(),
-		`SELECT count(*) FROM tickets WHERE round_id=$1 AND estado='disponible'`, roundID).Scan(&libres)
-	if libres == 0 {
-		_, _ = tx.Exec(r.Context(), `UPDATE rounds SET estado='cerrada' WHERE id=$1`, roundID)
-	}
+		`SELECT count(*) FROM tickets WHERE estado='disponible'`).Scan(&libres)
 	if err := tx.Commit(r.Context()); err != nil {
 		return out, 500, "no se pudo", false
 	}
@@ -114,8 +105,8 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,
 		Estado: "ganado", GanadoAt: ganadoTime.Format(time.RFC3339), EntregaEstimada: estimada,
 	}
-	cerrada := libres == 0
-	return out, 200, "", cerrada
+	agotado := libres == 0
+	return out, 200, "", agotado
 }
 
 func (m *Manejador) Escoger(w http.ResponseWriter, r *http.Request) {
@@ -124,7 +115,6 @@ func (m *Manejador) Escoger(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 401, map[string]string{"error": "sin sesion"})
 		return
 	}
-	roundID, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	var in struct {
 		TicketID int `json:"ticket_id"`
 	}
@@ -132,12 +122,12 @@ func (m *Manejador) Escoger(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 400, map[string]string{"error": "falta ticket_id"})
 		return
 	}
-	pedido, codigo, msg, cerrada := m.ocuparBoleta(w, r, in.TicketID, roundID, u.ID)
+	pedido, codigo, msg, agotado := m.ocuparBoleta(w, r, in.TicketID, u.ID)
 	if codigo != 200 {
 		escribir(w, codigo, map[string]string{"error": msg})
 		return
 	}
-	ws.AnunciaOcupada(roundID, pedido.TicketID, pedido.ID, cerrada)
+	ws.AnunciaOcupada(pedido.TicketID, pedido.ID, agotado)
 	escribir(w, 200, map[string]any{"order": pedido})
 }
 

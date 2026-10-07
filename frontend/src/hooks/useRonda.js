@@ -3,21 +3,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, wsUrl } from '../api/client'
 import { usarSesion } from '../store/sesion'
 
-export function usarRondaActiva() {
+export function usarStock() {
   return useQuery({
-    queryKey: ['ronda'],
-    queryFn: () => api('/rounds/active'),
+    queryKey: ['stock'],
+    queryFn: () => api('/tickets/estado'),
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
     retry: 1,
   })
 }
 
-export function usarBoletas(rondaId) {
+export function usarBoletas() {
   return useQuery({
-    queryKey: ['boletas', rondaId],
-    queryFn: () => api(`/rounds/${rondaId}/tickets`),
-    enabled: !!rondaId,
+    queryKey: ['boletas'],
+    queryFn: () => api('/tickets'),
     refetchInterval: 10000,
     refetchOnWindowFocus: true,
   })
@@ -33,19 +32,19 @@ export function usarSaldo() {
 }
 
 // socket avisa, el polling cubre si se cae
-export function usarSocket(rondaId) {
+export function usarSocket() {
   const qc = useQueryClient()
   const token = usarSesion((s) => s.token)
   useEffect(() => {
-    if (!rondaId || !token) return
+    if (!token) return
     let ws
     let vivo = true
     let espera = 1000
     const entra = () => {
-      ws = new WebSocket(wsUrl(rondaId, token))
+      ws = new WebSocket(wsUrl(token))
       ws.onmessage = () => {
-        qc.invalidateQueries({ queryKey: ['boletas', rondaId] })
-        qc.invalidateQueries({ queryKey: ['ronda'] })
+        qc.invalidateQueries({ queryKey: ['boletas'] })
+        qc.invalidateQueries({ queryKey: ['stock'] })
       }
       ws.onclose = () => {
         if (!vivo) return
@@ -60,5 +59,5 @@ export function usarSocket(rondaId) {
       vivo = false
       ws?.close()
     }
-  }, [rondaId, token, qc])
+  }, [token, qc])
 }
