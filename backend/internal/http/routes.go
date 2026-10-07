@@ -62,6 +62,8 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Post("/rounds", rh.Crear)
 		x.Post("/rounds/{id}/generate-tickets", rh.Generar)
 		x.Post("/codes/batch", ch.Lote)
+		x.Get("/orders", oh.ListaAdmin)
+		x.Patch("/orders/{id}", oh.CambiarEstado)
 	})
 
 	return r
