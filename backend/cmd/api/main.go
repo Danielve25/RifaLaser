@@ -49,6 +49,7 @@ func main() {
 	}))
 
 	r.Mount("/api", apihttp.Rutas(pool))
+	r.Mount("/ws", apihttp.RutasWS())
 
 	log.Info().Str("port", port).Msg("backend rifa-laser listo")
 	if err := http.ListenAndServe(":"+port, r); err != nil {
