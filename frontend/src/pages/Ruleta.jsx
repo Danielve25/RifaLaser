@@ -3,13 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import confetti from 'canvas-confetti'
 import Roulette from '../components/Roulette'
 import { api } from '../api/client'
-import { usarRondaActiva, usarBoletas, usarSocket } from '../hooks/useRonda'
+import { usarBoletas, usarSocket } from '../hooks/useRonda'
 
 export default function Ruleta() {
-  const ronda = usarRondaActiva()
-  const id = ronda.data?.ronda?.id
-  const boletas = usarBoletas(id)
-  usarSocket(id)
+  const boletas = usarBoletas()
+  usarSocket()
   const qc = useQueryClient()
   const [girando, setGirando] = useState(false)
   const [ganado, setGanado] = useState(null)
@@ -20,15 +18,15 @@ export default function Ruleta() {
     let order
     try {
       // primero pide el sorteo, luego anima lo que ya salió
-      const r = await api(`/rounds/${id}/draw`, { method: 'POST', body: JSON.stringify({}) })
+      const r = await api('/tickets/draw', { method: 'POST', body: JSON.stringify({}) })
       order = r.order
     } catch (e) {
-      alert(e.status === 409 ? 'Sin jugadas o ronda cerrada.' : e.message)
+      alert(e.status === 409 ? 'Sin jugadas o sin stock.' : e.message)
       return
     }
     setGanado(order)
     setGirando(true)
-    qc.invalidateQueries({ queryKey: ['boletas', id] })
+    qc.invalidateQueries({ queryKey: ['boletas'] })
     qc.invalidateQueries({ queryKey: ['saldo'] })
   }
 
@@ -43,13 +41,13 @@ export default function Ruleta() {
     <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
       <div className="max-w-lg mx-auto space-y-4 text-center">
         <h1 className="text-2xl font-black">Ruleta</h1>
-        {!id && !ronda.isLoading && (
+        {!boletas.isLoading && tickets.length === 0 && !girando && (
           <p className="rounded-xl border border-amber-500/20 bg-[#241610] p-4 text-stone-400">
-            La ronda se cerró. Vuelve cuando el taller abra la siguiente.
+            Se acabó el stock. Vuelve cuando el taller produzca más.
           </p>
         )}
         <Roulette tickets={tickets} ganador={ganado} girando={girando} onFin={fin} />
-        {!girando && (
+        {!girando && tickets.length > 0 && (
           <button onClick={girar} className="rounded bg-amber-500 text-[#17100B] font-bold px-8 py-3">
             Girar
           </button>

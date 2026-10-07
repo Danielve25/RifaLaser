@@ -3,13 +3,11 @@ import { useQueryClient } from '@tanstack/react-query'
 import confetti from 'canvas-confetti'
 import TicketGrid from '../components/TicketGrid'
 import { api } from '../api/client'
-import { usarRondaActiva, usarBoletas, usarSocket } from '../hooks/useRonda'
+import { usarBoletas, usarSocket } from '../hooks/useRonda'
 
 export default function Galeria() {
-  const ronda = usarRondaActiva()
-  const id = ronda.data?.ronda?.id
-  const boletas = usarBoletas(id)
-  usarSocket(id)
+  const boletas = usarBoletas()
+  usarSocket()
   const qc = useQueryClient()
   const [busy, setBusy] = useState(false)
   const [ganado, setGanado] = useState(null)
@@ -18,14 +16,14 @@ export default function Galeria() {
     if (busy) return
     setBusy(true)
     try {
-      const r = await api(`/rounds/${id}/pick`, { method: 'POST', body: JSON.stringify({ ticket_id: t.id }) })
+      const r = await api('/tickets/pick', { method: 'POST', body: JSON.stringify({ ticket_id: t.id }) })
       setGanado(r.order)
       if (r.order.es_raro) confetti({ particleCount: 120, spread: 70 })
-      qc.invalidateQueries({ queryKey: ['boletas', id] })
+      qc.invalidateQueries({ queryKey: ['boletas'] })
       qc.invalidateQueries({ queryKey: ['saldo'] })
     } catch (e) {
       alert(e.status === 409 ? 'Esa boleta ya se ocupó, escoge otra.' : e.message)
-      qc.invalidateQueries({ queryKey: ['boletas', id] })
+      qc.invalidateQueries({ queryKey: ['boletas'] })
     } finally {
       setBusy(false)
     }
@@ -37,9 +35,9 @@ export default function Galeria() {
     <main className="min-h-screen bg-[#17100B] text-amber-100 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
         <h1 className="text-2xl font-black">Galería · primero que llega, primero que escoge</h1>
-        {!id && !ronda.isLoading && (
+        {!boletas.isLoading && tickets.filter((t) => t.estado === 'disponible').length === 0 && (
           <p className="rounded-xl border border-amber-500/20 bg-[#241610] p-4 text-stone-400">
-            La ronda se cerró. Vuelve cuando el taller abra la siguiente.
+            Se acabó el stock. Vuelve cuando el taller produzca más.
           </p>
         )}
         {ganado && (
