@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"rifa-laser/backend/internal/auth"
+	"rifa-laser/backend/internal/codes"
 	"rifa-laser/backend/internal/products"
 	"rifa-laser/backend/internal/rounds"
 )
@@ -18,6 +19,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 	ah := &auth.Manejador{DB: db}
 	ph := &products.Manejador{DB: db}
 	rh := &rounds.Manejador{DB: db}
+	ch := &codes.Manejador{DB: db}
 
 	r.Get("/health", func(w nethttp.ResponseWriter, req *nethttp.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -32,6 +34,12 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 	r.With(auth.PedirLogin).Get("/me", ah.Yo)
 	r.With(auth.PedirLogin).Patch("/me", ah.CambiarPerfil)
 
+	r.Route("/codes", func(x chi.Router) {
+		x.Use(auth.PedirLogin)
+		x.With(auth.LimitePorIP(20, time.Minute)).Post("/redeem", ch.Canjear)
+		x.Get("/saldo", ch.Saldo)
+	})
+
 	r.Route("/rounds", func(x chi.Router) {
 		x.Use(auth.PedirLogin)
 		x.Get("/active", rh.Activa)
@@ -44,6 +52,7 @@ func Rutas(db *pgxpool.Pool) *chi.Mux {
 		x.Get("/products", ph.Listar)
 		x.Post("/rounds", rh.Crear)
 		x.Post("/rounds/{id}/generate-tickets", rh.Generar)
+		x.Post("/codes/batch", ch.Lote)
 	})
 
 	return r
