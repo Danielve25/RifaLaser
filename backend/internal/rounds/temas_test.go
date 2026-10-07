@@ -4,7 +4,7 @@ import "testing"
 
 func TestTemasAlAzar(t *testing.T) {
 	for _, n := range []int{100, 200, 600} {
-		got := temasAlAzar(n)
+		got := TemasAlAzar(n)
 		if len(got) != n {
 			t.Fatalf("queria %d temas, salieron %d", n, len(got))
 		}

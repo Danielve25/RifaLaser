@@ -39,7 +39,7 @@ var banco = []string{
 	"silla", "mesa", "puerta", "ventana", "techo", "pared", "piso", "escalera",
 }
 
-func temasAlAzar(n int) []string {
+func TemasAlAzar(n int) []string {
 	mezcla := append([]string{}, banco...)
 	rand.Shuffle(len(mezcla), func(a, b int) { mezcla[a], mezcla[b] = mezcla[b], mezcla[a] })
 	out := []string{}

@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"rifa-laser/backend/internal/boletas"
 )
 
 type Manejador struct {
@@ -52,7 +54,13 @@ func (m *Manejador) Crear(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
 	}
-	escribir(w, 201, map[string]any{"producto": p})
+	// todo el stock entra a la vez: crea sus boletas de una
+	n, err := boletas.Sincroniza(r.Context(), m.DB)
+	if err != nil {
+		escribir(w, 500, map[string]string{"error": "se guardo pero falto sincronizar"})
+		return
+	}
+	escribir(w, 201, map[string]any{"producto": p, "boletas": n})
 }
 
 func (m *Manejador) Listar(w http.ResponseWriter, r *http.Request) {
