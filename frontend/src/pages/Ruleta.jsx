@@ -11,10 +11,12 @@ export default function Ruleta() {
   const qc = useQueryClient()
   const [girando, setGirando] = useState(false)
   const [ganado, setGanado] = useState(null)
+  const [indice, setIndice] = useState(-1)
 
   const girar = async () => {
     if (girando) return
     setGanado(null)
+    setIndice(-1)
     let order
     try {
       // primero pide el sorteo, luego anima lo que ya salió
@@ -24,7 +26,11 @@ export default function Ruleta() {
       alert(e.status === 409 ? 'Sin jugadas o sin stock.' : e.message)
       return
     }
+    const lista = (boletas.data?.tickets ?? []).filter((t) => t.estado === 'disponible')
+    const idx = lista.findIndex((t) => t.id === order.ticket_id)
     setGanado(order)
+    if (idx < 0) return
+    setIndice(idx)
     setGirando(true)
     qc.invalidateQueries({ queryKey: ['boletas'] })
     qc.invalidateQueries({ queryKey: ['saldo'] })
@@ -46,7 +52,7 @@ export default function Ruleta() {
             Se acabó el stock. Vuelve cuando el taller produzca más.
           </p>
         )}
-        <Roulette tickets={tickets} ganador={ganado} girando={girando} onFin={fin} />
+        <Roulette tickets={tickets} indice={indice} girando={girando} onFin={fin} />
         {!girando && tickets.length > 0 && (
           <button onClick={girar} className="rounded bg-amber-500 text-[#17100B] font-bold px-8 py-3">
             Girar
