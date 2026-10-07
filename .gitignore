@@ -1,0 +1,14 @@
+.env
+backend/.env
+frontend/.env
+dist/
+node_modules/
+*.log
+# binarios Go
+backend/bin/
+backend/rifa-laser
+backend/*.exe
+backend/*.out
+*.test
+frontend/dist/
+.DS_Store
