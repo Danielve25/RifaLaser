@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"rifa-laser/backend/internal/auth"
+	"rifa-laser/backend/internal/ws"
 )
 
 type candidato struct {
@@ -145,6 +146,7 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
 	}
+	ws.AnunciaOcupada(roundID, ticketID, orderID, libres == 0)
 	escribir(w, 200, map[string]any{"order": Pedido{
 		ID: orderID, TicketID: ticketID, CodigoVisual: visual, Tema: tema,
 		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,

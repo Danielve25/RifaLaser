@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"rifa-laser/backend/internal/auth"
+	"rifa-laser/backend/internal/ws"
 )
 
 type Manejador struct {
@@ -35,11 +36,11 @@ func escribir(w http.ResponseWriter, codigo int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketID, roundID, userID int) (Pedido, int, string) {
+func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketID, roundID, userID int) (Pedido, int, string, bool) {
 	var out Pedido
 	tx, err := m.DB.Begin(r.Context())
 	if err != nil {
-		return out, 500, "no se pudo"
+		return out, 500, "no se pudo", false
 	}
 	defer tx.Rollback(r.Context())
 
@@ -50,7 +51,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		 AND NOT EXISTS (SELECT 1 FROM tickets t WHERE t.codigo_canje_id=c.id)
 		 LIMIT 1 FOR UPDATE`, userID).Scan(&codeID)
 	if err != nil {
-		return out, 409, "canjea un codigo primero"
+		return out, 409, "canjea un codigo primero", false
 	}
 	var tID, prodID int
 	var tEstado string
@@ -60,13 +61,13 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		`SELECT id, round_id, producto_id, estado FROM tickets WHERE id=$1 FOR UPDATE`, ticketID,
 	).Scan(&tID, &tRound, &prodID, &tEstado)
 	if err != nil {
-		return out, 404, "esa boleta no existe"
+		return out, 404, "esa boleta no existe", false
 	}
 	if tRound != roundID {
-		return out, 400, "esa boleta no es de esta ronda"
+		return out, 400, "esa boleta no es de esta ronda", false
 	}
 	if tEstado != "disponible" {
-		return out, 409, "esa boleta ya se ocupo"
+		return out, 409, "esa boleta ya se ocupo", false
 	}
 	var prodNombre, prodDesc string
 	var esRaro bool
@@ -82,7 +83,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		`UPDATE tickets SET estado='ocupada', ocupada_por=$2, codigo_canje_id=$3 WHERE id=$1`,
 		tID, userID, codeID)
 	if err != nil {
-		return out, 500, "no se pudo"
+		return out, 500, "no se pudo", false
 	}
 	_ = tx.QueryRow(r.Context(), `SELECT codigo_visual, tema FROM tickets WHERE id=$1`, tID).Scan(&visual, &tema)
 	estimada := time.Now().AddDate(0, 0, 5).Format("2006-01-02")
@@ -97,7 +98,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		esRaro, nombre, whatsapp, email, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
-		return out, 500, "no se pudo"
+		return out, 500, "no se pudo", false
 	}
 	var libres int
 	_ = tx.QueryRow(r.Context(),
@@ -106,14 +107,15 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		_, _ = tx.Exec(r.Context(), `UPDATE rounds SET estado='cerrada' WHERE id=$1`, roundID)
 	}
 	if err := tx.Commit(r.Context()); err != nil {
-		return out, 500, "no se pudo"
+		return out, 500, "no se pudo", false
 	}
 	out = Pedido{
 		ID: orderID, TicketID: tID, CodigoVisual: visual, Tema: tema,
 		Producto: prodNombre, EsRaro: esRaro, DireccionEntrega: direccion,
 		Estado: "ganado", GanadoAt: ganadoTime.Format(time.RFC3339), EntregaEstimada: estimada,
 	}
-	return out, 200, ""
+	cerrada := libres == 0
+	return out, 200, "", cerrada
 }
 
 func (m *Manejador) Escoger(w http.ResponseWriter, r *http.Request) {
@@ -130,11 +132,12 @@ func (m *Manejador) Escoger(w http.ResponseWriter, r *http.Request) {
 		escribir(w, 400, map[string]string{"error": "falta ticket_id"})
 		return
 	}
-	pedido, codigo, msg := m.ocuparBoleta(w, r, in.TicketID, roundID, u.ID)
+	pedido, codigo, msg, cerrada := m.ocuparBoleta(w, r, in.TicketID, roundID, u.ID)
 	if codigo != 200 {
 		escribir(w, codigo, map[string]string{"error": msg})
 		return
 	}
+	ws.AnunciaOcupada(roundID, pedido.TicketID, pedido.ID, cerrada)
 	escribir(w, 200, map[string]any{"order": pedido})
 }
 
