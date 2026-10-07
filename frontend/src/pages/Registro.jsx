@@ -12,6 +12,12 @@ const esquema = z.object({
   password: z.string().min(6, 'mínimo 6 letras'),
 })
 
+const campos = [
+  ['nombre', 'Nombre', 'Ana María', 'name', 'text'],
+  ['whatsapp', 'Teléfono', '300 123 4567', 'tel', 'tel'],
+  ['direccion', 'Dirección de entrega', 'Calle 10 #5-20', 'street-address', 'text'],
+]
+
 export default function Registro() {
   const nav = useNavigate()
   const entrar = usarSesion((s) => s.entrar)
@@ -27,23 +33,28 @@ export default function Registro() {
     }
   }
 
-  const campo = 'w-full rounded bg-black/40 border border-amber-500/20 px-3 py-2'
-  const nombres = { nombre: 'nombre', whatsapp: 'teléfono', direccion: 'dirección' }
   return (
-    <main className="min-h-screen bg-[#17100B] text-amber-100 flex items-center justify-center p-4">
-      <form onSubmit={handleSubmit(va)} className="w-full max-w-sm rounded-xl bg-[#241610] border border-amber-500/20 p-6 space-y-3">
-        <h1 className="text-2xl font-black">Crea tu cuenta</h1>
-        {['nombre', 'whatsapp', 'direccion'].map((c) => (
+    <main className="pantalla flex items-center justify-center">
+      <form onSubmit={handleSubmit(va)} className="caja">
+        <div>
+          <p className="font-display text-ambar text-sm tracking-widest">TALLER · CORTE LÁSER</p>
+          <h1 className="font-display text-3xl mt-1">Crea tu cuenta</h1>
+        </div>
+        {campos.map(([c, label, ph, ac, type]) => (
           <div key={c}>
-            <input {...register(c)} placeholder={nombres[c]} className={campo} />
-            {formState.errors[c] && <p className="text-xs text-red-400">{formState.errors[c].message}</p>}
+            <label className="etiqueta" htmlFor={`reg-${c}`}>{label}</label>
+            <input id={`reg-${c}`} {...register(c)} placeholder={ph} autoComplete={ac} inputMode={type === 'tel' ? 'tel' : undefined} className="input-taller" />
+            {formState.errors[c] && <p className="text-xs text-red-400 mt-1">{formState.errors[c].message}</p>}
           </div>
         ))}
-        <input {...register('password')} type="password" placeholder="clave" className={campo} />
-        {formState.errors.password && <p className="text-xs text-red-400">{formState.errors.password.message}</p>}
-        <button className="w-full rounded bg-amber-500 text-[#17100B] font-bold py-2">Registrarme</button>
-        <p className="text-sm text-stone-400">
-          ¿Ya tienes? <Link to="/login" className="text-amber-400">Entra</Link>
+        <div>
+          <label className="etiqueta" htmlFor="reg-password">Clave</label>
+          <input id="reg-password" {...register('password')} type="password" autoComplete="new-password" placeholder="Mínimo 6 letras" className="input-taller" />
+          {formState.errors.password && <p className="text-xs text-red-400 mt-1">{formState.errors.password.message}</p>}
+        </div>
+        <button className="btn-ambar">Registrarme</button>
+        <p className="text-sm text-piedra text-center">
+          ¿Ya tienes? <Link to="/login" className="text-ambar-brillo font-semibold">Entra</Link>
         </p>
       </form>
     </main>
