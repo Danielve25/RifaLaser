@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rs/zerolog/log"
+
 	"rifa-laser/backend/internal/auth"
 	"rifa-laser/backend/internal/ws"
 )
@@ -129,6 +131,7 @@ func (m *Manejador) Girar(w http.ResponseWriter, r *http.Request) {
 		esRaro, nombre, whatsapp, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
+		log.Error().Err(err).Msg("draw: no se pudo crear el pedido")
 		escribir(w, 500, map[string]string{"error": "no se pudo"})
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog/log"
 
 	"rifa-laser/backend/internal/auth"
 	"rifa-laser/backend/internal/ws"
@@ -93,6 +94,7 @@ func (m *Manejador) ocuparBoleta(w http.ResponseWriter, r *http.Request, ticketI
 		esRaro, nombre, whatsapp, direccion, estimada,
 	).Scan(&orderID, &ganadoTime)
 	if err != nil {
+		log.Error().Err(err).Msg("pick: no se pudo crear el pedido")
 		return out, 500, "no se pudo", false
 	}
 	var libres int
