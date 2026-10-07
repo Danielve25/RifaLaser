@@ -104,8 +104,35 @@ func (m *Manejador) Canjear(w http.ResponseWriter, r *http.Request) {
 	escribir(w, 200, map[string]any{"participacion": true, "codigo": codigo, "jugadas": n})
 }
 
-func (m *Manejador) Saldo(w http.ResponseWriter, r *http.Request) {
-	u, ok := auth.UsuarioDe(r.Context())
+type Fila struct {
+	Codigo    string `json:"codigo"`
+	Estado    string `json:"estado"`
+	Cliente   string `json:"cliente"`
+	Whatsapp  string `json:"whatsapp"`
+	Canjeado  string `json:"canjeado_at"`
+}
+
+func (m *Manejador) Lista(w http.ResponseWriter, r *http.Request) {
+	rows, err := m.DB.Query(r.Context(),
+		`SELECT c.codigo, c.estado, COALESCE(u.nombre,''), COALESCE(u.whatsapp,''),
+			COALESCE(c.canjeado_at::text,'')
+		 FROM codes c LEFT JOIN users u ON u.id=c.canjeado_por
+		 ORDER BY c.id DESC`)
+	if err != nil {
+		escribir(w, 500, map[string]string{"error": "no se pudo"})
+		return
+	}
+	defer rows.Close()
+	out := []Fila{}
+	for rows.Next() {
+		var f Fila
+		_ = rows.Scan(&f.Codigo, &f.Estado, &f.Cliente, &f.Whatsapp, &f.Canjeado)
+		out = append(out, f)
+	}
+	escribir(w, 200, map[string]any{"codigos": out})
+}
+
+func (m *Manejador) Saldo(w http.ResponseWriter, r *http.Request) {	u, ok := auth.UsuarioDe(r.Context())
 	if !ok {
 		escribir(w, 401, map[string]string{"error": "sin sesion"})
 		return
